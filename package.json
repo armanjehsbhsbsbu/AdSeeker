@@ -1,0 +1,12 @@
+{
+  "name": "adseeker",
+  "version": "1.0.0",
+  "description": "AdSeeker - B2B Ad Matchmaking Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
