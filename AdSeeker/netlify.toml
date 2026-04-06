@@ -1,7 +1,4 @@
 [build]
-  functions = "netlify/functions"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  base = "AdSeeker"
+  publish = "AdSeeker"
+  functions = "AdSeeker/Netlify/Functions"
