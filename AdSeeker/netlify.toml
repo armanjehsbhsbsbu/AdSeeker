@@ -1,4 +1,0 @@
-[build]
-  base = "AdSeeker"
-  publish = "AdSeeker"
-  functions = "AdSeeker/Netlify/Functions"
