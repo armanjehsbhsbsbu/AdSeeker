@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdSeeker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Epilogue:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0a0a0a;--lime:#c8f542;--lime2:#b5e030;--off:#f5f5f0;--mid:#6b6b6b;--border:#e0e0d8;--white:#ffffff}
+body{font-family:'Epilogue',sans-serif;background:var(--off);color:var(--ink);line-height:1.6}
+nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;height:60px;position:sticky;top:0;z-index:300}
+.logo{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--white);margin-right:2.5rem;flex-shrink:0;cursor:pointer}.logo span{color:var(--lime)}
+.nav-links{display:flex;gap:1.5rem;flex:1}.nav-links a{font-size:0.82rem;color:rgba(255,255,255,0.5);text-decoration:none;cursor:pointer;transition:color 0.2s}.nav-links a:hover{color:var(--white)}
+.nav-right{display:flex;gap:0.6rem;margin-left:auto;align-items:center}
+.nav-user{font-size:0.78rem;color:rgba(255,255,255,0.5);margin-right:0.5rem}
+.btn-ghost{padding:0.35rem 0.9rem;border:1px solid rgba(255,255,255,0.2);border-radius:4px;font-size:0.8rem;background:transparent;color:rgba(255,255,255,0.7);cursor:pointer;transition:all 0.2s}.btn-ghost:hover{border-color:var(--lime);color:var(--lime)}
+.btn-lime{padding:0.35rem 1rem;border:none;border-radius:4px;font-size:0.8rem;background:var(--lime);color:var(--ink);cursor:pointer;font-weight:600;transition:all 0.2s}.btn-lime:hover{background:var(--lime2)}
+.screen{display:none}.screen.active{display:block}
+.terms-overlay{position:fixed;inset:0;background:rgba(10,10,10,0.92);z-index:999;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.terms-box{background:var(--white);border-radius:10px;max-width:600px;width:100%;max-height:90vh;display:flex;flex-direction:column}
+.terms-head{padding:1.75rem 2rem 1rem;border-bottom:1px solid var(--border)}.terms-head h2{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--ink)}.terms-head p{font-size:0.83rem;color:var(--mid);margin-top:0.3rem;font-style:italic}
+.terms-body{padding:1.25rem 2rem;overflow-y:auto;flex:1}.terms-body h3{font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:var(--ink);margin:1.25rem 0 0.4rem;text-transform:uppercase;letter-spacing:0.05em}.terms-body p,.terms-body li{font-size:0.83rem;color:var(--mid);line-height:1.7;margin-bottom:0.4rem}.terms-body ul{padding-left:1.25rem;margin-bottom:0.5rem}
+.terms-foot{padding:1.25rem 2rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.terms-check{display:flex;align-items:center;gap:0.5rem;flex:1;cursor:pointer;min-width:200px}.terms-check input{width:16px;height:16px;cursor:pointer}.terms-check span{font-size:0.82rem;color:var(--mid)}
+.terms-accept{padding:0.65rem 1.75rem;background:var(--ink);color:var(--lime);border:none;border-radius:4px;font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:700;text-transform:uppercase;cursor:pointer;opacity:0.4;pointer-events:none;transition:opacity 0.2s}.terms-accept.ready{opacity:1;pointer-events:all}
+.banned-screen{min-height:100vh;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:2rem}
+.banned-box{background:var(--white);border-radius:10px;max-width:480px;width:100%;padding:2.5rem;text-align:center}
+.banned-icon{font-size:3rem;margin-bottom:1rem}.banned-box h2{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:#a32d2d;margin-bottom:0.75rem}.banned-box p{font-size:0.88rem;color:var(--mid);line-height:1.75;margin-bottom:0.5rem}
+.hero{background:var(--ink);padding:6rem 3rem 5rem}.hero-inner{max-width:860px;margin:0 auto}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;margin-bottom:2rem}.hero-dot{width:7px;height:7px;border-radius:50%;background:var(--lime)}.hero-eyebrow span{font-size:0.75rem;color:rgba(255,255,255,0.45);letter-spacing:0.1em;text-transform:uppercase;font-family:'Syne',sans-serif}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.8rem,6vw,4.8rem);font-weight:800;color:var(--white);line-height:1.05;letter-spacing:-0.03em;margin-bottom:1.5rem}.hero h1 .hl{color:var(--lime)}
+.hero-sub{font-size:1rem;color:rgba(255,255,255,0.5);font-weight:300;max-width:480px;line-height:1.8;margin-bottom:2.75rem;font-style:italic}
+.hero-actions{display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:4rem}
+.big-btn{padding:0.85rem 2.2rem;border-radius:4px;font-size:0.92rem;font-weight:600;cursor:pointer;transition:all 0.2s;border:none}
+.big-btn-lime{background:var(--lime);color:var(--ink)}.big-btn-lime:hover{background:var(--lime2)}
+.big-btn-outline{background:transparent;color:rgba(255,255,255,0.7);border:1.5px solid rgba(255,255,255,0.2)}.big-btn-outline:hover{border-color:rgba(255,255,255,0.6);color:var(--white)}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,0.08);padding-top:2.5rem;gap:1rem}
+.stat-num{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;color:var(--lime);letter-spacing:-0.02em}.stat-lbl{font-size:0.78rem;color:rgba(255,255,255,0.4);margin-top:2px;font-weight:300}
+.section{padding:5rem 3rem}.s-inner{max-width:860px;margin:0 auto}
+.overline{font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-bottom:0.75rem;font-family:'Syne',sans-serif}
+.s-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:800;color:var(--ink);line-height:1.1;letter-spacing:-0.02em;margin-bottom:1rem}
+.s-sub{font-size:0.95rem;color:var(--mid);max-width:480px;line-height:1.75;font-weight:300;font-style:italic;margin-bottom:3rem}
+.hiw-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--border)}.hiw-col{background:var(--white);padding:2.5rem}
+.hiw-col-head{font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding-bottom:1.25rem;margin-bottom:1.75rem;border-bottom:2px solid var(--ink);display:flex;align-items:center;gap:8px}
+.hiw-tag{background:var(--ink);color:var(--lime);font-size:0.7rem;font-weight:700;padding:3px 8px;border-radius:3px}
+.step-row{display:flex;gap:1rem;margin-bottom:1.5rem}.step-n{font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:800;color:var(--mid);min-width:20px;padding-top:3px}
+.step-body h4{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;color:var(--ink);margin-bottom:0.2rem}.step-body p{font-size:0.83rem;color:var(--mid);line-height:1.6;font-weight:300}
+.consent-bar{background:var(--ink);border-radius:6px;padding:1.25rem 1.75rem;margin-top:2.5rem;display:flex;align-items:center;gap:1rem}
+.consent-icon{width:36px;height:36px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;flex-shrink:0}.consent-icon svg{width:16px;height:16px;fill:var(--ink)}
+.consent-bar p{font-size:0.85rem;color:rgba(255,255,255,0.75);font-weight:300;font-style:italic}.consent-bar strong{color:var(--lime);font-style:normal;font-weight:600}
+.auth-wrap{min-height:calc(100vh - 60px);background:var(--off);display:flex;align-items:center;justify-content:center;padding:2rem}
+.auth-box{background:var(--white);border:1px solid var(--border);border-radius:10px;width:100%;max-width:440px;padding:2.25rem}
+.auth-box h2{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--ink);margin-bottom:0.3rem}.auth-box p.sub{font-size:0.83rem;color:var(--mid);margin-bottom:1.5rem;font-style:italic}
+.auth-tabs{display:flex;gap:2px;background:var(--off);border-radius:5px;padding:3px;margin-bottom:1.5rem}
+.auth-tab{flex:1;padding:0.45rem;border:none;background:none;border-radius:4px;font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;color:var(--mid);transition:all 0.2s}.auth-tab.on{background:var(--ink);color:var(--lime)}
+.fg{margin-bottom:1rem}.fg label{display:block;font-size:0.73rem;font-weight:700;color:var(--ink);margin-bottom:0.3rem;font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:0.05em}
+.fg input,.fg select,.fg textarea{width:100%;padding:0.55rem 0.85rem;border:1px solid var(--border);border-radius:4px;font-family:'Epilogue',sans-serif;font-size:0.85rem;color:var(--ink);background:var(--white);outline:none;transition:border 0.2s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--ink)}.fg textarea{resize:vertical;min-height:80px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+.auth-submit{width:100%;padding:0.7rem;background:var(--ink);color:var(--lime);border:none;border-radius:4px;font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;margin-top:0.5rem;transition:background 0.2s}.auth-submit:hover{background:#2a2a2a}
+.auth-switch{text-align:center;margin-top:1rem;font-size:0.8rem;color:var(--mid)}.auth-switch a{color:var(--ink);font-weight:600;cursor:pointer;text-decoration:underline}
+.forgot-link{text-align:right;font-size:0.78rem;margin-top:-0.5rem;margin-bottom:1rem}.forgot-link a{color:var(--ink);text-decoration:underline;cursor:pointer}
+.err-msg{background:#fce8e8;border:1px solid #f0b0b0;border-radius:4px;padding:0.6rem 0.85rem;font-size:0.8rem;color:#a32d2d;margin-bottom:1rem;display:none}
+.ok-msg{background:#e8f9f0;border:1px solid #a7e8c5;border-radius:4px;padding:0.6rem 0.85rem;font-size:0.8rem;color:#1a7a45;margin-bottom:1rem;display:none}
+.dash-layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 60px)}
+.sidebar{background:var(--white);border-right:1px solid var(--border);padding:1.5rem 0}
+.sidebar-user{padding:1rem 1.25rem 1.5rem;border-bottom:1px solid var(--border);margin-bottom:0.5rem}
+.sidebar-user-name{font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:800;color:var(--ink)}.sidebar-user-role{font-size:0.74rem;color:var(--mid);margin-top:2px;text-transform:capitalize}
+.sidebar-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--mid);padding:0.5rem 1.25rem;font-family:'Syne',sans-serif}
+.sidebar-link{display:flex;align-items:center;gap:10px;padding:0.6rem 1.25rem;font-size:0.84rem;color:var(--mid);cursor:pointer;transition:all 0.15s;border-left:3px solid transparent}
+.sidebar-link:hover{background:var(--off);color:var(--ink)}.sidebar-link.on{background:var(--off);color:var(--ink);border-left-color:var(--lime);font-weight:500}.sidebar-link svg{width:15px;height:15px;fill:currentColor;flex-shrink:0}
+.dash-main{background:var(--off);padding:2rem}.dash-panel{display:none}.dash-panel.on{display:block}
+.dash-header{margin-bottom:1.75rem}.dash-header h2{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--ink)}.dash-header p{font-size:0.83rem;color:var(--mid);margin-top:0.2rem}
+.card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:1.4rem;margin-bottom:1rem}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+.metric-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:1.25rem}
+.metric-val{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--ink);letter-spacing:-0.02em}.metric-lbl{font-size:0.76rem;color:var(--mid);margin-top:2px;font-weight:300}
+.tbl{width:100%;border-collapse:collapse;font-size:0.83rem}
+.tbl th{text-align:left;font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--mid);padding:0.6rem 0.85rem;border-bottom:1px solid var(--border);background:var(--off)}
+.tbl td{padding:0.75rem 0.85rem;border-bottom:1px solid var(--border);color:var(--ink);vertical-align:middle}.tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:var(--off)}
+.badge{display:inline-block;font-size:0.68rem;font-weight:700;padding:0.2rem 0.55rem;border-radius:3px;font-family:'Syne',sans-serif;letter-spacing:0.04em;text-transform:uppercase}
+.badge-green{background:#e8f9f0;color:#1a7a45}.badge-yellow{background:#fef3cd;color:#92660a}.badge-red{background:#fce8e8;color:#a32d2d}.badge-blue{background:#e8f0fb;color:#1a56b0}.badge-gray{background:#f0f0ec;color:#5f5e5a}
+.verified-badge{display:inline-flex;align-items:center;gap:3px;background:#f0fbd4;color:#4a6b0a;font-size:0.68rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:3px;font-family:'Syne',sans-serif}.verified-badge svg{width:10px;height:10px;fill:currentColor}
+.browse-top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:1rem}
+.search-box{padding:0.48rem 0.9rem;border:1px solid var(--border);border-radius:4px;font-size:0.83rem;width:190px;background:var(--white);color:var(--ink);outline:none}.search-box:focus{border-color:var(--ink)}
+.filters{display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.f-btn{padding:0.3rem 0.8rem;border:1px solid var(--border);border-radius:3px;font-size:0.74rem;background:var(--white);color:var(--mid);cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.05em}.f-btn:hover{border-color:var(--ink);color:var(--ink)}.f-btn.on{background:var(--ink);color:var(--lime);border-color:var(--ink)}
+.c-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:1.5rem}
+.c-card{background:var(--white);padding:1.35rem;transition:background 0.15s}.c-card:hover{background:#fafaf7}
+.c-tag{display:inline-block;font-size:0.66rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:0.18rem 0.55rem;border-radius:3px;margin-bottom:0.85rem;font-family:'Syne',sans-serif}
+.t-tech{background:#e8f0fb;color:#1a56b0}.t-food{background:#fef3cd;color:#92660a}.t-health{background:#e8f9f0;color:#1a7a45}.t-fashion{background:#fce8f3;color:#9c2e6e}.t-finance{background:#ede8fe;color:#5b3bc7}.t-other{background:#f0f0ec;color:#5f5e5a}
+.c-name{font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;color:var(--ink);margin-bottom:0.3rem}.c-desc{font-size:0.8rem;color:var(--mid);line-height:1.6;margin-bottom:1.1rem;font-weight:300}
+.c-foot{display:flex;justify-content:space-between;align-items:center;padding-top:0.85rem;border-top:1px solid var(--border);margin-bottom:0.85rem}
+.c-budget{font-size:0.76rem;color:var(--mid);font-weight:300}.c-budget strong{color:var(--ink);font-weight:600;font-family:'Syne',sans-serif}
+.xbtn{width:100%;padding:0.55rem;background:var(--ink);color:var(--lime);border:none;border-radius:4px;font-size:0.77rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;letter-spacing:0.05em;text-transform:uppercase;transition:background 0.2s}.xbtn:hover{background:#2a2a2a}
+.loading{text-align:center;padding:2rem;color:var(--mid);font-style:italic;font-size:0.85rem}
+.empty{text-align:center;padding:3rem;color:var(--mid);font-size:0.85rem;background:var(--white);border:1px solid var(--border);border-radius:8px}
+.msg-layout{display:grid;grid-template-columns:260px 1fr;height:500px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--white)}
+.msg-list{border-right:1px solid var(--border);overflow-y:auto}.msg-list-head{padding:1rem;border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:0.06em}
+.msg-item{padding:0.85rem 1rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s}.msg-item:hover{background:var(--off)}.msg-item.on{background:var(--off);border-left:3px solid var(--lime)}
+.msg-item-name{font-size:0.84rem;font-weight:600;color:var(--ink);font-family:'Syne',sans-serif;margin-bottom:0.2rem}.msg-item-preview{font-size:0.77rem;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:300}
+.msg-window{display:flex;flex-direction:column}.msg-window-head{padding:1rem 1.25rem;border-bottom:1px solid var(--border)}.msg-window-head h3{font-family:'Syne',sans-serif;font-size:0.92rem;font-weight:700;color:var(--ink)}
+.msg-warning{background:#fef3cd;border-bottom:1px solid #f0d98a;padding:0.6rem 1.25rem;font-size:0.76rem;color:#92660a;display:flex;align-items:center;gap:6px}.msg-warning svg{width:13px;height:13px;fill:#92660a;flex-shrink:0}
+.msg-body{flex:1;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:0.85rem}
+.msg-bubble{max-width:70%;padding:0.7rem 0.95rem;border-radius:8px;font-size:0.83rem;line-height:1.6}
+.msg-bubble.them{background:var(--off);color:var(--ink);align-self:flex-start;border-radius:2px 8px 8px 8px}.msg-bubble.me{background:var(--ink);color:var(--white);align-self:flex-end;border-radius:8px 2px 8px 8px}
+.msg-bubble .msg-meta{font-size:0.69rem;opacity:0.55;margin-top:4px}
+.msg-blocked{background:#fce8e8;border:1px solid #f0a0a0;border-radius:6px;padding:0.6rem 0.9rem;font-size:0.77rem;color:#a32d2d;margin:0.5rem 0;text-align:center}
+.msg-input-row{padding:1rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:0.75rem;align-items:flex-end}
+.msg-input{flex:1;padding:0.6rem 0.9rem;border:1px solid var(--border);border-radius:4px;font-family:'Epilogue',sans-serif;font-size:0.84rem;color:var(--ink);resize:none;height:44px;outline:none;transition:border 0.2s}.msg-input:focus{border-color:var(--ink)}
+.msg-send{padding:0.6rem 1.1rem;background:var(--ink);color:var(--lime);border:none;border-radius:4px;font-family:'Syne',sans-serif;font-size:0.77rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer}.msg-send:hover{background:#2a2a2a}
+.pay-options{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+.pay-option{background:var(--white);border:2px solid var(--border);border-radius:8px;padding:1.25rem;cursor:pointer;transition:all 0.2s;text-align:center}.pay-option:hover{border-color:var(--ink)}.pay-option.on{border-color:var(--ink);background:var(--off)}
+.pay-option h4{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:800;color:var(--ink);margin-bottom:0.3rem}.pay-option p{font-size:0.78rem;color:var(--mid);font-weight:300}
+.pay-summary{background:var(--off);border:1px solid var(--border);border-radius:6px;padding:1.1rem 1.25rem;margin-bottom:1.25rem}
+.pay-row{display:flex;justify-content:space-between;font-size:0.83rem;padding:0.3rem 0}.pay-row.total{border-top:1px solid var(--border);margin-top:0.4rem;padding-top:0.6rem;font-weight:600;font-family:'Syne',sans-serif}.pay-row.fee span:last-child{color:#a32d2d}
+.pay-btn{width:100%;padding:0.75rem;background:var(--ink);color:var(--lime);border:none;border-radius:4px;font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer}.pay-btn:hover{background:#2a2a2a}
+.post-inner{max-width:580px;margin:0 auto}.fs{background:var(--off);border:1px solid var(--border);border-radius:6px;padding:1.5rem;margin-bottom:1.1rem}
+.fs-head{font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--mid);margin-bottom:1.1rem}
+.cpills{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.35rem}
+.cpill{padding:0.28rem 0.75rem;border:1px solid var(--border);border-radius:3px;font-size:0.72rem;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;transition:all 0.2s;background:var(--white);color:var(--mid)}.cpill.on{background:var(--ink);color:var(--lime);border-color:var(--ink)}
+.sub-bar{display:flex;justify-content:flex-end;gap:0.75rem;margin-top:1.25rem}.sub-bar button{padding:0.6rem 1.35rem;border-radius:4px;font-size:0.8rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:0.05em}
+.sb-ghost{background:none;border:1px solid var(--border);color:var(--mid)}.sb-main{background:var(--ink);border:none;color:var(--lime)}.sb-main:hover{background:#2a2a2a}
+.admin-top{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,10,10,0.55);z-index:500;align-items:center;justify-content:center;padding:2rem}.modal-overlay.open{display:flex}
+.modal-box{background:var(--white);border-radius:8px;max-width:500px;width:100%;padding:1.75rem;position:relative;max-height:90vh;overflow-y:auto}
+.modal-close{position:absolute;top:0.9rem;right:0.9rem;background:none;border:none;font-size:1rem;cursor:pointer;color:var(--mid)}
+.modal-box h2{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--ink);margin-bottom:0.3rem}.modal-sub{font-size:0.81rem;color:var(--mid);margin-bottom:1.25rem;font-style:italic}
+.m-actions{display:flex;gap:0.75rem;margin-top:1.25rem}.m-cancel{flex:1;padding:0.6rem;border:1px solid var(--border);border-radius:4px;background:none;color:var(--mid);cursor:pointer;font-size:0.83rem}
+.m-submit{flex:1;padding:0.6rem;border:none;border-radius:4px;background:var(--ink);color:var(--lime);cursor:pointer;font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase}
+.ok-box{background:#e8f9f0;border:1px solid #a7e8c5;border-radius:6px;padding:1rem;text-align:center;margin-top:0.75rem;display:none}.ok-box p{color:#1a7a45;font-size:0.84rem;font-weight:500}
+.btn-sm{padding:0.3rem 0.75rem;border-radius:3px;font-size:0.74rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:0.04em;border:none;transition:all 0.2s}
+.btn-sm-dark{background:var(--ink);color:var(--lime)}.btn-sm-dark:hover{background:#2a2a2a}.btn-sm-outline{background:none;border:1px solid var(--border);color:var(--mid)}.btn-sm-outline:hover{border-color:var(--ink);color:var(--ink)}.btn-sm-green{background:#e8f9f0;color:#1a7a45;border:1px solid #a7e8c5}.btn-sm-red{background:#fce8e8;color:#a32d2d;border:1px solid #f0b0b0}
+.avatar{width:64px;height:64px;border-radius:50%;background:var(--ink);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--lime)}
+.stat-edit-row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border)}.stat-edit-row:last-of-type{border-bottom:none}
+.stat-edit-label{font-size:0.75rem;font-weight:700;color:var(--ink);font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem}
+.stat-edit-input{width:100%;padding:0.5rem 0.75rem;border:1px solid var(--border);border-radius:4px;font-size:0.85rem;color:var(--ink);outline:none}.stat-edit-input:focus{border-color:var(--ink)}
+.stat-preview{background:var(--ink);border-radius:8px;padding:1.5rem;margin-bottom:1rem}.stat-preview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.stat-preview-num{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:var(--lime)}.stat-preview-lbl{font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:2px}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;max-width:900px;margin:0 auto}
+.contact-info-item{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.5rem}
+.contact-info-icon{width:40px;height:40px;background:#f0fbd4;border:1px solid var(--lime);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}.contact-info-icon svg{width:16px;height:16px;fill:var(--ink)}
+.contact-info-label{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--mid);font-family:'Syne',sans-serif;margin-bottom:0.2rem}.contact-info-val{font-size:0.92rem;color:var(--ink)}
+.trust-card{background:var(--off);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin-bottom:1rem}.trust-card h3{font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:800;color:var(--ink);margin-bottom:0.5rem}.trust-card p{font-size:0.85rem;color:var(--mid);line-height:1.7}
+.interest-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:0.75rem}
+.interest-card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem}
+.interest-card-name{font-family:'Syne',sans-serif;font-size:0.92rem;font-weight:700;color:var(--ink)}.interest-card-site{font-size:0.8rem;color:var(--mid);margin-top:0.2rem}
+.interest-card-msg{font-size:0.83rem;color:var(--mid);line-height:1.6;font-style:italic;margin-bottom:0.75rem;padding:0.75rem;background:var(--off);border-radius:4px}.interest-card-meta{font-size:0.76rem;color:var(--mid)}
+.contact-msg-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:0.75rem}
+.contact-msg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.5rem}
+.contact-msg-name{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;color:var(--ink)}.contact-msg-email{font-size:0.78rem;color:var(--mid)}
+.contact-msg-text{font-size:0.83rem;color:var(--mid);line-height:1.6;padding:0.75rem;background:var(--off);border-radius:4px;margin-top:0.5rem}
+footer{background:var(--ink);color:rgba(255,255,255,0.3);text-align:center;padding:1.5rem;font-size:0.76rem}
+footer strong{color:var(--lime);font-family:'Syne',sans-serif;font-weight:800}
+</style>
+</head>
+<body>
+<!-- TERMS -->
+<div class="terms-overlay" id="terms-overlay">
+  <div class="terms-box">
+    <div class="terms-head"><h2>Terms &amp; Conditions</h2><p>Please read and accept before entering AdSeeker</p></div>
+    <div class="terms-body">
+      <h3>1. Platform Use</h3><p>AdSeeker is a B2B advertising matchmaking platform. By entering, you agree to use it exclusively for legitimate business advertising partnerships.</p>
+      <h3>2. Communication Monitoring</h3><p>AdSeeker has the right to monitor and review all messages exchanged on the platform to ensure compliance, prevent fraud, and maintain a safe environment.</p>
+      <h3>3. No Off-Platform Dealing</h3><p>Users are strictly prohibited from bypassing the platform to complete deals externally. This includes sharing personal contact details in chat, arranging payments outside AdSeeker, or soliciting direct contact off-platform.</p>
+      <h3>4. Commission &amp; Payments</h3><p>AdSeeker charges a 5% commission fee on all transactions. Any attempt to avoid platform fees may result in immediate account suspension or legal action.</p>
+      <h3>5. Deal Completion</h3><p>All agreements initiated on AdSeeker must be completed through the platform. Contact details are only revealed after a confirmed payment.</p>
+      <h3>6. Account Suspension</h3><p>AdSeeker reserves the right to suspend or permanently ban any account found in violation of these terms. Banned users will be notified via email.</p>
+    </div>
+    <div class="terms-foot">
+      <label class="terms-check"><input type="checkbox" id="terms-cb" onchange="toggleAccept()"><span>I have read and agree to the Terms &amp; Conditions</span></label>
+      <button class="terms-accept" id="terms-accept-btn" onclick="acceptTerms()">Enter Platform</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="showScreen('landing')">Ad<span>Seeker</span></div>
+  <div class="nav-links" id="nav-links">
+    <a onclick="showScreen('landing')">Home</a>
+    <a onclick="showScreen('browse-public')">Browse Campaigns</a>
+    <a onclick="showScreen('contact')">Contact</a>
+    <a onclick="showScreen('login')">Sign In</a>
+  </div>
+  <div class="nav-right" id="nav-right">
+    <button class="btn-ghost" onclick="showScreen('login')">Sign in</button>
+    <button class="btn-lime" onclick="showScreen('register')">Get started</button>
+  </div>
+</nav>
+
+<!-- LANDING -->
+<div id="screen-landing" class="screen active">
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-eyebrow"><div class="hero-dot"></div><span>The B2B Ad Matchmaking Platform</span></div>
+      <h1>Ads that work<br><span class="hl">both ways.</span></h1>
+      <p class="hero-sub">Advertisers find publishers. Publishers find revenue. Both sides approve before anything moves forward.</p>
+      <div class="hero-actions">
+        <button class="big-btn big-btn-lime" onclick="showScreen('register')">Post a campaign</button>
+        <button class="big-btn big-btn-outline" onclick="showScreen('browse-public')">Browse as publisher</button>
+      </div>
+      <div class="hero-stats">
+        <div><div class="stat-num" id="stat-s1">...</div><div class="stat-lbl" id="stat-l1">Active campaigns</div></div>
+        <div><div class="stat-num" id="stat-s2">...</div><div class="stat-lbl" id="stat-l2">Registered businesses</div></div>
+        <div><div class="stat-num" id="stat-s3">...</div><div class="stat-lbl" id="stat-l3">Deals facilitated</div></div>
+        <div><div class="stat-num" id="stat-s4">...</div><div class="stat-lbl" id="stat-l4">Match satisfaction</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="section" style="background:var(--off)">
+    <div class="s-inner">
+      <div class="overline">How it works</div>
+      <div class="s-title">Two sides. One handshake.</div>
+      <div class="s-sub">No algorithms. No middlemen. Both businesses agree before a single contact detail is revealed.</div>
+      <div class="hiw-grid">
+        <div class="hiw-col">
+          <div class="hiw-col-head"><span>Advertisers</span><span class="hiw-tag">Promote</span></div>
+          <div class="step-row"><div class="step-n">01</div><div class="step-body"><h4>Post your campaign</h4><p>Describe your product, audience, budget, and goals.</p></div></div>
+          <div class="step-row"><div class="step-n">02</div><div class="step-body"><h4>Receive interest</h4><p>Publishers who want to host your ads send you a request.</p></div></div>
+          <div class="step-row"><div class="step-n">03</div><div class="step-body"><h4>Approve a match</h4><p>Review profiles and approve publishers that fit your brand.</p></div></div>
+          <div class="step-row"><div class="step-n">04</div><div class="step-body"><h4>Pay &amp; go live</h4><p>Process payment through AdSeeker. Ad goes live.</p></div></div>
+        </div>
+        <div class="hiw-col">
+          <div class="hiw-col-head"><span>Publishers</span><span class="hiw-tag">Earn</span></div>
+          <div class="step-row"><div class="step-n">01</div><div class="step-body"><h4>Browse campaigns</h4><p>Explore ads from brands that fit your niche.</p></div></div>
+          <div class="step-row"><div class="step-n">02</div><div class="step-body"><h4>Express interest</h4><p>Pick campaigns and send a note through secure chat.</p></div></div>
+          <div class="step-row"><div class="step-n">03</div><div class="step-body"><h4>Await approval</h4><p>The advertiser reviews your site and approves if it fits.</p></div></div>
+          <div class="step-row"><div class="step-n">04</div><div class="step-body"><h4>Get paid securely</h4><p>Payment flows through AdSeeker. You receive funds directly.</p></div></div>
+        </div>
+      </div>
+      <div class="consent-bar">
+        <div class="consent-icon"><svg viewBox="0 0 20 20"><path d="M9 12l-3-3 1.4-1.4L9 9.2l5.6-5.6L16 5z"/></svg></div>
+        <p><strong>All payments &amp; communication stay on AdSeeker.</strong> Contact details only revealed after confirmed payment. 5% commission applies.</p>
+      </div>
+    </div>
+  </div>
+  <footer><strong>AdSeeker</strong> &mdash; The B2B Ad Matchmaking Platform &middot; &copy; 2025 AdSeeker Ltd.</footer>
+</div>
+
+<!-- BROWSE PUBLIC -->
+<div id="screen-browse-public" class="screen">
+  <div class="section" style="background:var(--off);min-height:calc(100vh - 60px)">
+    <div class="s-inner">
+      <div class="overline">Browse campaigns</div>
+      <div class="browse-top">
+        <div class="s-title" style="margin-bottom:0">Active campaigns</div>
+        <input class="search-box" type="text" placeholder="Search..." oninput="filterSearch(this.value)">
+      </div>
+      <div class="filters">
+        <button class="f-btn on" onclick="fc('all',this)">All</button>
+        <button class="f-btn" onclick="fc('Technology',this)">Tech</button>
+        <button class="f-btn" onclick="fc('Food & Drink',this)">Food &amp; Drink</button>
+        <button class="f-btn" onclick="fc('Health',this)">Health</button>
+        <button class="f-btn" onclick="fc('Fashion',this)">Fashion</button>
+        <button class="f-btn" onclick="fc('Finance',this)">Finance</button>
+      </div>
+      <div id="cgrid-pub"><div class="loading">Loading campaigns...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<div id="screen-contact" class="screen">
+  <div class="hero" style="padding:4rem 3rem 3rem">
+    <div class="hero-inner">
+      <div class="overline" style="color:rgba(255,255,255,0.4)">Get in touch</div>
+      <h1 style="font-size:clamp(2rem,4vw,3rem);margin-bottom:1rem">Contact <span class="hl">AdSeeker</span></h1>
+      <p class="hero-sub" style="margin-bottom:0">We are here to help advertisers and publishers get the most out of the platform.</p>
+    </div>
+  </div>
+  <div class="section" style="background:var(--off)">
+    <div class="contact-grid">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--mid);margin-bottom:1.5rem">Contact information</div>
+        <div class="contact-info-item">
+          <div class="contact-info-icon"><svg viewBox="0 0 20 20"><path d="M3 4h14v12H3zM3 4l7 8 7-8"/></svg></div>
+          <div><div class="contact-info-label">Email</div><div class="contact-info-val">hello@adseeker.com</div></div>
+        </div>
+        <div class="contact-info-item">
+          <div class="contact-info-icon"><svg viewBox="0 0 20 20"><path d="M3 3h4l2 5-2 2a11 11 0 005 5l2-2 5 2v4a2 2 0 01-2 2C7 20 0 13 0 5a2 2 0 012-2z"/></svg></div>
+          <div><div class="contact-info-label">Phone</div><div class="contact-info-val">+34 612 345 678</div></div>
+        </div>
+        <div class="contact-info-item">
+          <div class="contact-info-icon"><svg viewBox="0 0 20 20"><path d="M10 2C6 2 3 5 3 9c0 5 7 11 7 11s7-6 7-11c0-4-3-7-7-7zm0 9a2 2 0 110-4 2 2 0 010 4z"/></svg></div>
+          <div><div class="contact-info-label">Location</div><div class="contact-info-val">Las Palmas de Gran Canaria, Spain</div></div>
+        </div>
+        <div class="contact-info-item">
+          <div class="contact-info-icon"><svg viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4zm0 2v5l4 2-1 1.5-5-2.5V6z"/></svg></div>
+          <div><div class="contact-info-label">Business hours</div><div class="contact-info-val">Monday - Friday, 9am - 6pm CET</div></div>
+        </div>
+        <div style="margin-top:1.5rem">
+          <div id="contact-err" class="err-msg"></div>
+          <div id="contact-ok" class="ok-msg"></div>
+          <div class="fg"><label>Your name</label><input type="text" id="contact-name" placeholder="Jane Smith"></div>
+          <div class="fg"><label>Email</label><input type="email" id="contact-email" placeholder="you@company.com"></div>
+          <div class="fg"><label>Message</label><textarea id="contact-message" placeholder="How can we help you?"></textarea></div>
+          <button class="sb-main" style="width:100%;padding:0.75rem" onclick="submitContactMessage()">Send message</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--mid);margin-bottom:1.5rem">Why trust AdSeeker?</div>
+        <div class="trust-card"><h3>Built for fair business</h3><p>AdSeeker connects advertisers and publishers directly with no algorithms, no hidden fees, and no surprises.</p></div>
+        <div class="trust-card"><h3>Mutual consent on every deal</h3><p>Every deal requires both sides to approve each other before any contact is shared. You are always in control.</p></div>
+        <div class="trust-card"><h3>Your money is always safe</h3><p>All payments are processed securely through AdSeeker. We only take our 5% commission after a deal is confirmed.</p></div>
+        <div class="trust-card"><h3>Transparent by design</h3><p>We monitor all communications to ensure nobody bypasses the system. Verified businesses display a badge so you know who you are dealing with.</p></div>
+      </div>
+    </div>
+  </div>
+  <footer><strong>AdSeeker</strong> &mdash; The B2B Ad Matchmaking Platform &middot; &copy; 2025 AdSeeker Ltd.</footer>
+</div>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen">
+  <div class="auth-wrap"><div class="auth-box">
+    <h2>Welcome back</h2><p class="sub">Sign in to your AdSeeker account</p>
+    <div id="login-err" class="err-msg"></div>
+    <div class="auth-tabs">
+      <button class="auth-tab on" onclick="setLoginRole('advertiser',this)">Advertiser</button>
+      <button class="auth-tab" onclick="setLoginRole('publisher',this)">Publisher</button>
+    </div>
+    <div class="fg"><label>Email</label><input type="email" id="login-email" placeholder="you@company.com"></div>
+    <div class="fg"><label>Password</label><input type="password" id="login-pass" placeholder=""></div>
+    <div class="forgot-link"><a onclick="showScreen('forgot')">Forgot password?</a></div>
+    <button class="auth-submit" onclick="doLogin()">Sign in</button>
+    <p class="auth-switch">No account? <a onclick="showScreen('register')">Register here</a> &nbsp;|&nbsp; <a onclick="showScreen('admin-login')">Admin login</a></p>
+  </div></div>
+</div>
+
+<!-- FORGOT PASSWORD -->
+<div id="screen-forgot" class="screen">
+  <div class="auth-wrap"><div class="auth-box">
+    <h2>Reset your password</h2><p class="sub">Enter your email and Supabase will send a secure reset link automatically</p>
+    <div id="forgot-err" class="err-msg"></div>
+    <div id="forgot-ok" class="ok-msg"></div>
+    <div class="fg"><label>Email</label><input type="email" id="forgot-email" placeholder="you@company.com"></div>
+    <button class="auth-submit" onclick="doForgotPassword()">Send reset link</button>
+    <p class="auth-switch"><a onclick="showScreen('login')">Back to sign in</a></p>
+  </div></div>
+</div>
+
+<!-- RESET PASSWORD -->
+<div id="screen-reset-password" class="screen">
+  <div class="auth-wrap"><div class="auth-box">
+    <h2>Choose a new password</h2><p class="sub">Enter a new secure password for your account</p>
+    <div id="reset-err" class="err-msg"></div>
+    <div id="reset-ok" class="ok-msg"></div>
+    <div class="fg"><label>New password</label><input type="password" id="new-pass" placeholder="Min. 6 characters"></div>
+    <div class="fg"><label>Confirm password</label><input type="password" id="confirm-pass" placeholder="Repeat your password"></div>
+    <button class="auth-submit" onclick="doResetPassword()">Update password</button>
+  </div></div>
+</div>
+
+<!-- BANNED -->
+<div id="screen-banned" class="screen">
+  <div class="banned-screen"><div class="banned-box">
+    <div class="banned-icon">&#x1F6AB;</div>
+    <h2>Your account has been banned</h2>
+    <p>Your account has been permanently suspended from AdSeeker due to a violation of our Terms &amp; Conditions.</p>
+    <p style="margin-top:0.75rem">If you believe this is a mistake or have any questions, please contact us at:</p>
+    <p style="margin-top:0.75rem;font-weight:600;color:var(--ink);font-family:'Syne',sans-serif">hello@adseeker.com</p>
+    <p style="margin-top:0.5rem;font-size:0.8rem;color:var(--mid)">Please include your name and the email associated with your account.</p>
+  </div></div>
+</div>
+
+<!-- REGISTER -->
+<div id="screen-register" class="screen">
+  <div class="auth-wrap"><div class="auth-box">
+    <h2>Create account</h2><p class="sub">Join AdSeeker as an advertiser or publisher</p>
+    <div id="reg-err" class="err-msg"></div>
+    <div id="reg-ok" class="ok-msg"></div>
+    <div class="auth-tabs">
+      <button class="auth-tab on" onclick="setRole('advertiser',this)">Advertiser</button>
+      <button class="auth-tab" onclick="setRole('publisher',this)">Publisher</button>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>First name</label><input type="text" id="reg-fname" placeholder="Jane"></div>
+      <div class="fg"><label>Last name</label><input type="text" id="reg-lname" placeholder="Smith"></div>
+    </div>
+    <div class="fg"><label>Company name</label><input type="text" id="reg-company" placeholder="Your company"></div>
+    <div class="fg"><label>Email</label><input type="email" id="reg-email" placeholder="you@company.com"></div>
+    <div class="fg"><label>Phone number</label><input type="text" id="reg-phone" placeholder="+34 612 345 678"></div>
+    <div class="fg"><label>Password</label><input type="password" id="reg-pass" placeholder="Min. 6 characters"></div>
+    <div class="fg"><label>Website URL</label><input type="text" id="reg-website" placeholder="https://yoursite.com"></div>
+    <button class="auth-submit" onclick="doRegister()">Create account</button>
+    <p class="auth-switch">Already have an account? <a onclick="showScreen('login')">Sign in</a></p>
+  </div></div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="screen-admin-login" class="screen">
+  <div class="auth-wrap"><div class="auth-box">
+    <h2>Admin access</h2><p class="sub">Restricted to AdSeeker administrators only</p>
+    <div id="admin-err" class="err-msg"></div>
+    <div class="fg"><label>Username</label><input type="text" id="admin-user" placeholder="Username"></div>
+    <div class="fg"><label>Password</label><input type="password" id="admin-pass" placeholder=""></div>
+    <button class="auth-submit" onclick="doAdminLogin()">Sign in as admin</button>
+    <p class="auth-switch"><a onclick="showScreen('login')">Back to user login</a></p>
+  </div></div>
+</div>
+<!-- ADVERTISER DASHBOARD -->
+<div id="screen-adv-dash" class="screen">
+  <div class="dash-layout">
+    <div class="sidebar">
+      <div class="sidebar-user"><div class="sidebar-user-name" id="adv-user-name">Loading...</div><div class="sidebar-user-role">Advertiser</div></div>
+      <div class="sidebar-label">Main</div>
+      <div class="sidebar-link on" onclick="showAdvPanel('overview',this)"><svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Overview</div>
+      <div class="sidebar-link" onclick="showAdvPanel('campaigns',this)"><svg viewBox="0 0 16 16"><path d="M2 3h12v2H2zm0 4h12v2H2zm0 4h8v2H2z"/></svg>My Campaigns</div>
+      <div class="sidebar-link" onclick="showAdvPanel('interests',this)"><svg viewBox="0 0 16 16"><path d="M8 1l2 5h5l-4 3 1.5 5L8 11l-4.5 3L5 9 1 6h5z"/></svg>Publisher Interests</div>
+      <div class="sidebar-link" onclick="showAdvPanel('messages',this)"><svg viewBox="0 0 16 16"><path d="M1 2h14v10H9l-4 3v-3H1z"/></svg>Messages</div>
+      <div class="sidebar-link" onclick="showAdvPanel('deals',this)"><svg viewBox="0 0 16 16"><rect x="1" y="3" width="14" height="10" rx="1"/><path d="M1 7h14"/></svg>Deals &amp; Payments</div>
+      <div class="sidebar-link" onclick="showAdvPanel('post',this)"><svg viewBox="0 0 16 16"><path d="M8 1v14M1 8h14"/></svg>Post Campaign</div>
+      <div class="sidebar-label" style="margin-top:1rem">Account</div>
+      <div class="sidebar-link" onclick="showAdvPanel('profile',this)"><svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>Profile</div>
+      <div class="sidebar-link" onclick="doLogout()"><svg viewBox="0 0 16 16"><path d="M6 2H2v12h4M11 5l3 3-3 3M14 8H6"/></svg>Sign out</div>
+    </div>
+    <div class="dash-main">
+      <div class="dash-panel on" id="adv-panel-overview">
+        <div class="dash-header"><h2>Overview</h2><p id="adv-greeting">Welcome back!</p></div>
+        <div class="card-grid">
+          <div class="metric-card"><div class="metric-val" id="adv-ov-campaigns">0</div><div class="metric-lbl">My campaigns</div></div>
+          <div class="metric-card"><div class="metric-val" id="adv-ov-interests">0</div><div class="metric-lbl">Publisher interests</div></div>
+          <div class="metric-card"><div class="metric-val">0</div><div class="metric-lbl">Active deals</div></div>
+          <div class="metric-card"><div class="metric-val">0</div><div class="metric-lbl">Messages</div></div>
+        </div>
+        <div class="card"><p style="font-size:0.85rem;color:var(--mid)">Welcome to AdSeeker! Post a campaign to start receiving interest from publishers.</p></div>
+      </div>
+      <div class="dash-panel" id="adv-panel-campaigns">
+        <div class="dash-header"><h2>My campaigns</h2><p>Loaded live from Supabase.</p></div>
+        <div style="margin-bottom:1rem;display:flex;justify-content:flex-end"><button class="btn-sm btn-sm-dark" onclick="showAdvPanel('post',null)">+ New campaign</button></div>
+        <div class="card"><div id="adv-campaigns-list"><div class="loading">Loading...</div></div></div>
+      </div>
+      <div class="dash-panel" id="adv-panel-interests">
+        <div class="dash-header"><h2>Publisher interests</h2><p>Publishers who expressed interest in your campaigns - live from Supabase.</p></div>
+        <div id="adv-interests-list"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="dash-panel" id="adv-panel-messages">
+        <div class="dash-header"><h2>Messages</h2><p>All communication stays on AdSeeker. Contact details are protected.</p></div>
+        <div class="msg-layout">
+          <div class="msg-list"><div class="msg-list-head">Conversations</div><div id="adv-convo-list"><div style="padding:1rem;font-size:0.78rem;color:var(--mid)">No conversations yet</div></div></div>
+          <div class="msg-window">
+            <div class="msg-window-head"><h3 id="adv-msg-name">Select a conversation</h3></div>
+            <div class="msg-warning"><svg viewBox="0 0 16 16"><path d="M8 1L1 14h14L8 1zm0 4v5m0 2v1"/></svg>All messages are monitored. Do not share external contact details.</div>
+            <div class="msg-body" id="adv-msg-body"><div style="text-align:center;padding:2rem;color:var(--mid);font-size:0.83rem;font-style:italic">Select a conversation to start chatting</div></div>
+            <div class="msg-input-row"><textarea class="msg-input" placeholder="Type a message..." id="adv-msg-input"></textarea><button class="msg-send" onclick="sendMsgAs('adv')">Send</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-panel" id="adv-panel-deals">
+        <div class="dash-header"><h2>Deals &amp; Payments</h2><p>All transactions processed securely through AdSeeker.</p></div>
+        <div class="card">
+          <div class="pay-options">
+            <div class="pay-option on" onclick="selectPay('weekly',this)"><h4>Weekly</h4><p>Paid every 7 days</p></div>
+            <div class="pay-option" onclick="selectPay('monthly',this)"><h4>Monthly</h4><p>Paid once per month</p></div>
+          </div>
+          <div class="pay-summary">
+            <div class="pay-row"><span>Deal amount</span><span>€2,400</span></div>
+            <div class="pay-row"><span id="pay-period-label">Per week</span><span id="pay-installment">€200</span></div>
+            <div class="pay-row fee"><span>AdSeeker commission (5%)</span><span id="pay-fee">-€10</span></div>
+            <div class="pay-row total"><span>Publisher receives</span><span id="pay-net">€190</span></div>
+          </div>
+          <div class="frow">
+            <div class="fg"><label>Card number</label><input type="text" placeholder="1234 5678 9012 3456"></div>
+            <div class="fg"><label>Expiry</label><input type="text" placeholder="MM/YY"></div>
+          </div>
+          <button class="pay-btn" onclick="processPayment()">Pay now &amp; confirm deal</button>
+          <div id="pay-success" style="display:none;margin-top:1rem" class="ok-box"><p>Payment confirmed! Your deal is now active.</p></div>
+        </div>
+      </div>
+      <div class="dash-panel" id="adv-panel-post">
+        <div class="dash-header"><h2>Post a campaign</h2><p>Saved to Supabase. Publishers will browse and express interest.</p></div>
+        <div class="post-inner">
+          <div id="post-err" class="err-msg"></div><div id="post-ok" class="ok-msg"></div>
+          <div class="fs">
+            <div class="fs-head">Campaign details</div>
+            <div class="fg"><label>Campaign title</label><input type="text" id="camp-title" placeholder="e.g. Summer launch"></div>
+            <div class="fg"><label>What are you promoting?</label><textarea id="camp-desc" placeholder="Describe your product or service..."></textarea></div>
+            <div class="fg"><label>Category</label>
+              <div class="cpills">
+                <div class="cpill" onclick="sc(this)">Technology</div><div class="cpill" onclick="sc(this)">Food &amp; Drink</div>
+                <div class="cpill" onclick="sc(this)">Health</div><div class="cpill" onclick="sc(this)">Fashion</div>
+                <div class="cpill" onclick="sc(this)">Finance</div><div class="cpill" onclick="sc(this)">Travel</div>
+                <div class="cpill" onclick="sc(this)">Education</div><div class="cpill" onclick="sc(this)">Other</div>
+              </div>
+            </div>
+          </div>
+          <div class="fs">
+            <div class="fs-head">Budget &amp; target</div>
+            <div class="frow">
+              <div class="fg"><label>Budget range</label><select id="camp-budget"><option>€0-€500</option><option>€500-€1,000</option><option>€1,000-€5,000</option><option>€5,000-€15,000</option><option>€15,000+</option></select></div>
+              <div class="fg"><label>Duration</label><select id="camp-duration"><option>1 month</option><option>3 months</option><option>6 months</option><option>Ongoing</option></select></div>
+            </div>
+            <div class="fg"><label>Ideal publisher audience</label><input type="text" id="camp-audience" placeholder="e.g. Tech-savvy millennials..."></div>
+          </div>
+          <div class="sub-bar"><button class="sb-ghost">Save draft</button><button class="sb-main" onclick="postCampaign()">Publish campaign</button></div>
+        </div>
+      </div>
+      <div class="dash-panel" id="adv-panel-profile">
+        <div class="dash-header"><h2>My profile</h2><p>Changes saved directly to Supabase.</p></div>
+        <div class="card" style="max-width:560px">
+          <div style="display:flex;align-items:center;gap:1.25rem;margin-bottom:1.75rem">
+            <div class="avatar" id="adv-avatar">?</div>
+            <div><div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--ink)" id="adv-profile-name-display">...</div><div style="font-size:0.8rem;color:var(--mid)" id="adv-profile-company-display">...</div><div style="margin-top:4px"><span class="badge badge-blue">Advertiser</span></div></div>
+          </div>
+          <div class="fg"><label>Full name</label><input type="text" id="adv-profile-name"></div>
+          <div class="fg"><label>Company</label><input type="text" id="adv-profile-company"></div>
+          <div class="fg"><label>Website</label><input type="text" id="adv-profile-website"></div>
+          <div class="fg"><label>Phone</label><input type="text" id="adv-profile-phone"></div>
+          <div class="sub-bar"><button class="sb-main" onclick="saveProfile('adv')">Save changes</button></div>
+          <div id="adv-profile-ok" class="ok-msg" style="margin-top:0.75rem"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PUBLISHER DASHBOARD -->
+<div id="screen-pub-dash" class="screen">
+  <div class="dash-layout">
+    <div class="sidebar">
+      <div class="sidebar-user"><div class="sidebar-user-name" id="pub-user-name">Loading...</div><div class="sidebar-user-role">Publisher</div></div>
+      <div class="sidebar-label">Main</div>
+      <div class="sidebar-link on" onclick="showPubPanel('overview',this)"><svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Overview</div>
+      <div class="sidebar-link" onclick="showPubPanel('browse',this)"><svg viewBox="0 0 16 16"><path d="M2 3h12v2H2zm0 4h12v2H2zm0 4h8v2H2z"/></svg>Browse Campaigns</div>
+      <div class="sidebar-link" onclick="showPubPanel('messages',this)"><svg viewBox="0 0 16 16"><path d="M1 2h14v10H9l-4 3v-3H1z"/></svg>Messages</div>
+      <div class="sidebar-link" onclick="showPubPanel('deals',this)"><svg viewBox="0 0 16 16"><rect x="1" y="3" width="14" height="10" rx="1"/><path d="M1 7h14"/></svg>Deals &amp; Earnings</div>
+      <div class="sidebar-label" style="margin-top:1rem">Account</div>
+      <div class="sidebar-link" onclick="showPubPanel('profile',this)"><svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>Profile</div>
+      <div class="sidebar-link" onclick="doLogout()"><svg viewBox="0 0 16 16"><path d="M6 2H2v12h4M11 5l3 3-3 3M14 8H6"/></svg>Sign out</div>
+    </div>
+    <div class="dash-main">
+      <div class="dash-panel on" id="pub-panel-overview">
+        <div class="dash-header"><h2>Overview</h2><p id="pub-greeting">Welcome back!</p></div>
+        <div class="card-grid">
+          <div class="metric-card"><div class="metric-val" id="pub-ov-interests">0</div><div class="metric-lbl">Interests sent</div></div>
+          <div class="metric-card"><div class="metric-val">0</div><div class="metric-lbl">Active deals</div></div>
+          <div class="metric-card"><div class="metric-val">0</div><div class="metric-lbl">Messages</div></div>
+          <div class="metric-card"><div class="metric-val">€0</div><div class="metric-lbl">Total earned</div></div>
+        </div>
+        <div class="card"><p style="font-size:0.85rem;color:var(--mid)">Welcome to AdSeeker! Browse campaigns and express interest to start earning.</p></div>
+      </div>
+      <div class="dash-panel" id="pub-panel-browse">
+        <div class="dash-header"><h2>Browse campaigns</h2><p>Live from Supabase - all real campaigns posted by advertisers.</p></div>
+        <div class="filters" id="pub-filters">
+          <button class="f-btn on" onclick="fcPub('all',this)">All</button>
+          <button class="f-btn" onclick="fcPub('Technology',this)">Tech</button>
+          <button class="f-btn" onclick="fcPub('Food & Drink',this)">Food &amp; Drink</button>
+          <button class="f-btn" onclick="fcPub('Health',this)">Health</button>
+          <button class="f-btn" onclick="fcPub('Fashion',this)">Fashion</button>
+          <button class="f-btn" onclick="fcPub('Finance',this)">Finance</button>
+        </div>
+        <div id="pub-cgrid"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="dash-panel" id="pub-panel-messages">
+        <div class="dash-header"><h2>Messages</h2><p>All communication stays on AdSeeker.</p></div>
+        <div class="msg-layout">
+          <div class="msg-list"><div class="msg-list-head">Conversations</div><div id="pub-convo-list"><div style="padding:1rem;font-size:0.78rem;color:var(--mid)">No conversations yet</div></div></div>
+          <div class="msg-window">
+            <div class="msg-window-head"><h3 id="pub-msg-name">Select a conversation</h3></div>
+            <div class="msg-warning"><svg viewBox="0 0 16 16"><path d="M8 1L1 14h14L8 1zm0 4v5m0 2v1"/></svg>All messages are monitored. Do not share external contact details.</div>
+            <div class="msg-body" id="pub-msg-body"><div style="text-align:center;padding:2rem;color:var(--mid);font-size:0.83rem;font-style:italic">Select a conversation to start chatting</div></div>
+            <div class="msg-input-row"><textarea class="msg-input" placeholder="Type a message..." id="pub-msg-input"></textarea><button class="msg-send" onclick="sendMsgAs('pub')">Send</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-panel" id="pub-panel-deals">
+        <div class="dash-header"><h2>Deals &amp; Earnings</h2><p>Track your active deals and payments.</p></div>
+        <div class="card"><p style="font-size:0.85rem;color:var(--mid)">When an advertiser confirms a deal with you, it will appear here.</p></div>
+      </div>
+      <div class="dash-panel" id="pub-panel-profile">
+        <div class="dash-header"><h2>My profile</h2><p>Changes saved directly to Supabase.</p></div>
+        <div class="card" style="max-width:560px">
+          <div style="display:flex;align-items:center;gap:1.25rem;margin-bottom:1.75rem">
+            <div class="avatar" id="pub-avatar">?</div>
+            <div><div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--ink)" id="pub-profile-name-display">...</div><div style="font-size:0.8rem;color:var(--mid)" id="pub-profile-company-display">...</div><div style="margin-top:4px"><span class="badge badge-green">Publisher</span></div></div>
+          </div>
+          <div class="fg"><label>Full name</label><input type="text" id="pub-profile-name"></div>
+          <div class="fg"><label>Company / Publication name</label><input type="text" id="pub-profile-company"></div>
+          <div class="fg"><label>Website</label><input type="text" id="pub-profile-website"></div>
+          <div class="fg"><label>Phone</label><input type="text" id="pub-profile-phone"></div>
+          <div class="sub-bar"><button class="sb-main" onclick="saveProfile('pub')">Save changes</button></div>
+          <div id="pub-profile-ok" class="ok-msg" style="margin-top:0.75rem"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ADMIN DASHBOARD -->
+<div id="screen-admin-dash" class="screen">
+  <div class="dash-layout">
+    <div class="sidebar">
+      <div class="sidebar-user"><div class="sidebar-user-name">Admin Panel</div><div class="sidebar-user-role">AdSeeker Owner</div></div>
+      <div class="sidebar-link on" onclick="showAdminPanel('analytics',this)"><svg viewBox="0 0 16 16"><path d="M1 14V8l4-4 4 4 4-6v12H1z"/></svg>Analytics</div>
+      <div class="sidebar-link" onclick="showAdminPanel('stats-editor',this)"><svg viewBox="0 0 16 16"><path d="M1 12h3V6H1zm4 0h3V3H5zm4 0h3V8H9zm4 0h2V1h-2z"/></svg>Homepage Stats</div>
+      <div class="sidebar-link" onclick="showAdminPanel('users',this)"><svg viewBox="0 0 16 16"><circle cx="6" cy="4" r="3"/><path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>Users</div>
+      <div class="sidebar-link" onclick="showAdminPanel('campaigns',this)"><svg viewBox="0 0 16 16"><path d="M2 3h12v2H2zm0 4h12v2H2zm0 4h8v2H2z"/></svg>Campaigns</div>
+      <div class="sidebar-link" onclick="showAdminPanel('contacts',this)"><svg viewBox="0 0 16 16"><path d="M1 2h14v10H9l-4 3v-3H1z"/></svg>Contact Messages</div>
+      <div class="sidebar-link" onclick="showAdminPanel('disputes',this)"><svg viewBox="0 0 16 16"><path d="M8 1L1 14h14L8 1zm0 5v4m0 2v1"/></svg>Disputes</div>
+      <div class="sidebar-link" style="margin-top:2rem" onclick="doLogout()"><svg viewBox="0 0 16 16"><path d="M6 2H2v12h4M11 5l3 3-3 3M14 8H6"/></svg>Sign out</div>
+    </div>
+    <div class="dash-main">
+      <div class="dash-panel on" id="admin-panel-analytics">
+        <div class="dash-header"><h2>Platform analytics</h2><p>Live data pulled from Supabase database.</p></div>
+        <div class="admin-top">
+          <div class="metric-card"><div class="metric-val" id="admin-total-users">...</div><div class="metric-lbl">Total users</div></div>
+          <div class="metric-card"><div class="metric-val" id="admin-total-advertisers">...</div><div class="metric-lbl">Advertisers</div></div>
+          <div class="metric-card"><div class="metric-val" id="admin-total-publishers">...</div><div class="metric-lbl">Publishers</div></div>
+          <div class="metric-card"><div class="metric-val" id="admin-total-campaigns">...</div><div class="metric-lbl">Campaigns</div></div>
+        </div>
+        <div class="card-grid">
+          <div class="metric-card"><div class="metric-val" id="admin-total-interests">...</div><div class="metric-lbl">Total interests</div></div>
+          <div class="metric-card"><div class="metric-val" id="admin-total-contacts">...</div><div class="metric-lbl">Contact messages</div></div>
+          <div class="metric-card"><div class="metric-val">5%</div><div class="metric-lbl">Commission rate</div></div>
+        </div>
+      </div>
+      <div class="dash-panel" id="admin-panel-stats-editor">
+        <div class="dash-header"><h2>Homepage stats editor</h2><p>Saved to Supabase display_stats table. Goes live on homepage instantly.</p></div>
+        <div id="stats-save-ok" class="ok-msg">Stats updated and live!</div>
+        <div id="stats-save-err" class="err-msg">Error saving. Please try again.</div>
+        <div class="stat-preview">
+          <div style="font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.4);margin-bottom:1rem">Live preview</div>
+          <div class="stat-preview-grid">
+            <div><div class="stat-preview-num" id="prev-s1">...</div><div class="stat-preview-lbl" id="prev-l1">...</div></div>
+            <div><div class="stat-preview-num" id="prev-s2">...</div><div class="stat-preview-lbl" id="prev-l2">...</div></div>
+            <div><div class="stat-preview-num" id="prev-s3">...</div><div class="stat-preview-lbl" id="prev-l3">...</div></div>
+            <div><div class="stat-preview-num" id="prev-s4">...</div><div class="stat-preview-lbl" id="prev-l4">...</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="stat-edit-row"><div><div class="stat-edit-label">Stat 1 Value</div><input class="stat-edit-input" id="edit-s1" oninput="updatePreview()"></div><div><div class="stat-edit-label">Stat 1 Label</div><input class="stat-edit-input" id="edit-l1" oninput="updatePreview()"></div></div>
+          <div class="stat-edit-row"><div><div class="stat-edit-label">Stat 2 Value</div><input class="stat-edit-input" id="edit-s2" oninput="updatePreview()"></div><div><div class="stat-edit-label">Stat 2 Label</div><input class="stat-edit-input" id="edit-l2" oninput="updatePreview()"></div></div>
+          <div class="stat-edit-row"><div><div class="stat-edit-label">Stat 3 Value</div><input class="stat-edit-input" id="edit-s3" oninput="updatePreview()"></div><div><div class="stat-edit-label">Stat 3 Label</div><input class="stat-edit-input" id="edit-l3" oninput="updatePreview()"></div></div>
+          <div class="stat-edit-row"><div><div class="stat-edit-label">Stat 4 Value</div><input class="stat-edit-input" id="edit-s4" oninput="updatePreview()"></div><div><div class="stat-edit-label">Stat 4 Label</div><input class="stat-edit-input" id="edit-l4" oninput="updatePreview()"></div></div>
+          <div style="display:flex;justify-content:flex-end;margin-top:1rem"><button class="btn-sm btn-sm-dark" onclick="saveStats()" style="padding:0.6rem 1.5rem">Save and go live</button></div>
+        </div>
+      </div>
+      <div class="dash-panel" id="admin-panel-users">
+        <div class="dash-header"><h2>User management</h2><p>All data from Supabase. Role (Advertiser/Publisher) shown from database. Click name for full profile.</p></div>
+        <div class="card"><div id="admin-users-list"><div class="loading">Loading users...</div></div></div>
+      </div>
+      <div class="dash-panel" id="admin-panel-campaigns">
+        <div class="dash-header"><h2>All campaigns</h2><p>Live from Supabase campaigns table.</p></div>
+        <div class="card"><div id="admin-campaigns-list"><div class="loading">Loading...</div></div></div>
+      </div>
+      <div class="dash-panel" id="admin-panel-contacts">
+        <div class="dash-header"><h2>Contact messages</h2><p>Messages sent via the contact page - stored in Supabase contact_messages table.</p></div>
+        <div id="admin-contacts-list"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="dash-panel" id="admin-panel-disputes">
+        <div class="dash-header"><h2>Disputes and reports</h2><p>Review and resolve reported issues.</p></div>
+        <div class="card"><p style="font-size:0.85rem;color:var(--mid)">No disputes reported yet.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="interest-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('interest-modal')">&#x2715;</button>
+    <h2 id="int-title">Express interest</h2>
+    <p class="modal-sub">Tell this advertiser why your audience is a great fit. Do not include external contact details.</p>
+    <div id="int-form">
+      <div class="fg"><label>Your website</label><input type="text" id="int-website" placeholder="https://yoursite.com"></div>
+      <div class="fg"><label>Monthly visitors</label><input type="text" id="int-visitors" placeholder="e.g. 120,000"></div>
+      <div class="fg"><label>Why are you a great fit?</label><textarea id="int-message" placeholder="Describe your audience and content niche..."></textarea></div>
+    </div>
+    <div class="m-actions" id="int-actions">
+      <button class="m-cancel" onclick="closeModal('interest-modal')">Cancel</button>
+      <button class="m-submit" onclick="submitInterest()">Send interest</button>
+    </div>
+    <div class="ok-box" id="int-ok"><p>Interest sent and saved to Supabase! Contact only revealed after confirmed payment.</p></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="user-detail-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('user-detail-modal')">&#x2715;</button>
+    <h2 id="udm-name">User details</h2>
+    <p class="modal-sub" id="udm-role">...</p>
+    <div id="udm-content"></div>
+    <div style="margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1.25rem">
+      <div style="font-family:'Syne',sans-serif;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--mid);margin-bottom:0.75rem">Admin actions</div>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap">
+        <button class="btn-sm btn-sm-dark" onclick="adminEmailUser()">Send email</button>
+        <button class="btn-sm btn-sm-green" id="udm-verify-btn" onclick="adminVerifyUser()">Verify</button>
+        <button class="btn-sm btn-sm-red" onclick="adminBanUser()">Ban user</button>
+      </div>
+      <div id="udm-action-ok" class="ok-msg" style="margin-top:0.75rem"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="signup-prompt-modal">
+  <div class="modal-box" style="text-align:center;max-width:380px">
+    <button class="modal-close" onclick="closeModal('signup-prompt-modal')">&#x2715;</button>
+    <div style="font-size:2.5rem;margin-bottom:1rem">&#x1F512;</div>
+    <h2 style="margin-bottom:0.5rem">Sign up first</h2>
+    <p style="font-size:0.85rem;color:var(--mid);margin-bottom:1.5rem;font-style:italic">You need a free account to express interest in campaigns.</p>
+    <div style="display:flex;gap:0.75rem">
+      <button class="m-cancel" onclick="closeModal('signup-prompt-modal')">Cancel</button>
+      <button class="m-submit" onclick="closeModal('signup-prompt-modal');showScreen('register')">Create account</button>
+    </div>
+  </div>
+</div>
+<script>
+const SUPABASE_URL='https://bdfysstpqepjnlxrthob.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkZnlzc3RwcWVwam5seHJ0aG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNTgwMzksImV4cCI6MjA5MDYzNDAzOX0.WCGk6Vg3V7pDypK-OEmbCgdPwAJ3do_0cOdDUh69_7Q';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentUser=null,loginRole='advertiser',currentRole='advertiser';
+let currentCat='all',pubCat='all',allCampaigns=[],currentCampaignId=null,selectedCategory='',currentAdminUser=null;
+
+// On page load - check for password reset hash or existing session
+window.addEventListener('load',async()=>{
+  const hash=window.location.hash;
+  if(hash.includes('type=recovery')){
+    document.getElementById('terms-overlay').style.display='none';
+    showScreen('reset-password');return;
+  }
+  const {data:{session}}=await sb.auth.getSession();
+  if(session){
+    const {data:udata}=await sb.from('users').select('*').eq('email',session.user.email).single();
+    if(udata){
+      if(udata.banned){document.getElementById('terms-overlay').style.display='none';showScreen('banned');return;}
+      currentUser=udata;
+      document.getElementById('terms-overlay').style.display='none';
+      currentUser.role==='publisher'?showScreen('pub-dash'):showScreen('adv-dash');
+      return;
+    }
+  }
+  loadStats();loadCampaigns();
+});
+
+function toggleAccept(){document.getElementById('terms-accept-btn').classList.toggle('ready',document.getElementById('terms-cb').checked);}
+function acceptTerms(){document.getElementById('terms-overlay').style.display='none';loadStats();loadCampaigns();}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function showScreen(s){
+  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+  const el=document.getElementById('screen-'+s);
+  if(el)el.classList.add('active');
+  window.scrollTo(0,0);updateNav(s);
+  if(s==='browse-public')renderCampaigns();
+  if(s==='adv-dash'){loadAdvDash();renderPubGrid();}
+  if(s==='pub-dash'){loadPubDash();renderPubGrid();}
+  if(s==='admin-dash')loadAdminDash();
+}
+
+function updateNav(s){
+  const nl=document.getElementById('nav-links');
+  const nr=document.getElementById('nav-right');
+  if(s==='admin-dash'){
+    nl.innerHTML='<a onclick="showScreen(\'landing\')">Home</a>';
+    nr.innerHTML='<span class="nav-user">Admin</span><button class="btn-ghost" onclick="doLogout()">Sign out</button>';
+  }else if((s==='adv-dash'||s==='pub-dash')&&currentUser){
+    nl.innerHTML='<a onclick="showScreen(\'landing\')">Home</a><a onclick="showScreen(\'browse-public\')">Browse</a><a onclick="showScreen(\'contact\')">Contact</a>';
+    nr.innerHTML='<span class="nav-user">'+(currentUser.name||currentUser.email)+'</span><button class="btn-ghost" onclick="doLogout()">Sign out</button>';
+  }else{
+    nl.innerHTML='<a onclick="showScreen(\'landing\')">Home</a><a onclick="showScreen(\'browse-public\')">Browse Campaigns</a><a onclick="showScreen(\'contact\')">Contact</a><a onclick="showScreen(\'login\')">Sign In</a>';
+    nr.innerHTML='<button class="btn-ghost" onclick="showScreen(\'login\')">Sign in</button><button class="btn-lime" onclick="showScreen(\'register\')">Get started</button>';
+  }
+}
+
+function setLoginRole(r,btn){loginRole=r;document.querySelectorAll('#screen-login .auth-tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+function setRole(r,btn){currentRole=r;document.querySelectorAll('#screen-register .auth-tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+
+// Password reset - Supabase sends email automatically using your custom template
+async function doForgotPassword(){
+  const email=document.getElementById('forgot-email').value.trim();
+  const errEl=document.getElementById('forgot-err'),okEl=document.getElementById('forgot-ok');
+  errEl.style.display='none';okEl.style.display='none';
+  if(!email){errEl.textContent='Please enter your email.';errEl.style.display='block';return;}
+  const redirectTo=window.location.origin+window.location.pathname+'#type=recovery';
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  okEl.textContent='Reset link sent! Check your email inbox. The link will redirect you back to AdSeeker to set your new password.';okEl.style.display='block';
+}
+
+// Called when user clicks reset link in email and lands on reset-password screen
+async function doResetPassword(){
+  const pass=document.getElementById('new-pass').value;
+  const confirm=document.getElementById('confirm-pass').value;
+  const errEl=document.getElementById('reset-err'),okEl=document.getElementById('reset-ok');
+  errEl.style.display='none';okEl.style.display='none';
+  if(pass.length<6){errEl.textContent='Password must be at least 6 characters.';errEl.style.display='block';return;}
+  if(pass!==confirm){errEl.textContent='Passwords do not match.';errEl.style.display='block';return;}
+  const {error}=await sb.auth.updateUser({password:pass});
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  okEl.textContent='Password updated successfully! Redirecting to sign in...';okEl.style.display='block';
+  setTimeout(()=>showScreen('login'),2500);
+}
+
+// Register - Supabase AUTOMATICALLY sends confirmation email using your custom template
+async function doRegister(){
+  const fname=document.getElementById('reg-fname').value.trim();
+  const lname=document.getElementById('reg-lname').value.trim();
+  const company=document.getElementById('reg-company').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const website=document.getElementById('reg-website').value.trim();
+  const phone=document.getElementById('reg-phone').value.trim();
+  const errEl=document.getElementById('reg-err'),okEl=document.getElementById('reg-ok');
+  errEl.style.display='none';okEl.style.display='none';
+  if(!fname||!email||!pass||!company){errEl.textContent='Please fill in all required fields.';errEl.style.display='block';return;}
+  if(pass.length<6){errEl.textContent='Password must be at least 6 characters.';errEl.style.display='block';return;}
+  // Supabase signUp sends confirmation email automatically using the template you set in Supabase dashboard
+  const {error}=await sb.auth.signUp({email,password:pass,options:{emailRedirectTo:window.location.origin+window.location.pathname,data:{name:fname+' '+lname,company,role:currentRole,website,phone}}});
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  // Save to users table with role (advertiser/publisher)
+  await sb.from('users').insert({name:fname+' '+lname,email,role:currentRole,company,website,phone,verified:false,banned:false});
+  okEl.textContent='Account created! A confirmation email has been sent to '+email+'. Please confirm before signing in.';okEl.style.display='block';
+}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const errEl=document.getElementById('login-err');
+  errEl.style.display='none';
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){
+    errEl.textContent=error.message.includes('Email not confirmed')?'Please confirm your email first. Check your inbox.':'Invalid email or password.';
+    errEl.style.display='block';return;
+  }
+  const {data:udata}=await sb.from('users').select('*').eq('email',email).single();
+  if(udata&&udata.banned){await sb.auth.signOut();document.getElementById('terms-overlay').style.display='none';showScreen('banned');return;}
+  currentUser=udata||{name:email,email,role:loginRole,company:''};
+  currentUser.role==='publisher'?showScreen('pub-dash'):showScreen('adv-dash');
+}
+
+function doAdminLogin(){
+  const u=document.getElementById('admin-user').value;
+  const p=document.getElementById('admin-pass').value;
+  const errEl=document.getElementById('admin-err');
+  if(u==='Sneax'&&p==='Arman2406'){document.getElementById('terms-overlay').style.display='none';showScreen('admin-dash');}
+  else{errEl.textContent='Invalid credentials.';errEl.style.display='block';}
+}
+
+async function doLogout(){await sb.auth.signOut();currentUser=null;showScreen('landing');}
+
+// Load stats from Supabase display_stats table
+async function loadStats(){
+  try{
+    const {data}=await sb.from('display_stats').select('*').eq('id',1).single();
+    if(data){
+      document.getElementById('stat-s1').textContent=data.campaigns||'...';
+      document.getElementById('stat-l1').textContent=data.label_campaigns||'Active campaigns';
+      document.getElementById('stat-s2').textContent=data.businesses||'...';
+      document.getElementById('stat-l2').textContent=data.label_businesses||'Registered businesses';
+      document.getElementById('stat-s3').textContent=data.deals||'...';
+      document.getElementById('stat-l3').textContent=data.label_deals||'Deals facilitated';
+      document.getElementById('stat-s4').textContent=data.satisfaction||'...';
+      document.getElementById('stat-l4').textContent=data.label_satisfaction||'Match satisfaction';
+    }
+  }catch(e){console.log('Stats not ready yet');}
+}
+
+async function loadCampaigns(){
+  const {data}=await sb.from('campaigns').select('*').order('created_at',{ascending:false});
+  allCampaigns=data||[];renderCampaigns();renderPubGrid();
+}
+
+function getCatClass(cat){
+  return({'Technology':'t-tech','Food & Drink':'t-food','Health':'t-health','Fashion':'t-fashion','Finance':'t-finance'})[cat]||'t-other';
+}
+
+function campaignCard(c){
+  return '<div class="c-card"><span class="c-tag '+getCatClass(c.category)+'">'+(c.category||'General')+'</span><div class="c-name">'+(c.title||'')+'</div><div class="c-desc">'+(c.description||'')+'</div><div class="c-foot"><div class="c-budget">Budget <strong>'+(c.budget||'N/A')+'</strong></div><div style="font-size:0.76rem;color:var(--mid)">'+(c.duration||'')+'</div></div><button class="xbtn" onclick="handleInterestClick(\''+c.id+'\',\''+((c.title||'').replace(/'/g,"\\'"))+'\')">Express interest</button></div>';
+}
+
+function renderCampaigns(){
+  const g=document.getElementById('cgrid-pub');if(!g)return;
+  let d=currentCat==='all'?allCampaigns:allCampaigns.filter(c=>c.category===currentCat);
+  g.innerHTML=d.length?'<div class="c-grid">'+d.map(campaignCard).join('')+'</div>':'<div class="empty">No campaigns yet. Be the first to post!</div>';
+}
+
+function renderPubGrid(){
+  const g=document.getElementById('pub-cgrid');if(!g)return;
+  let d=pubCat==='all'?allCampaigns:allCampaigns.filter(c=>c.category===pubCat);
+  g.innerHTML=d.length?'<div class="c-grid">'+d.map(campaignCard).join('')+'</div>':'<div class="empty">No campaigns yet.</div>';
+}
+
+function fc(c,btn){currentCat=c;document.querySelectorAll('#screen-browse-public .filters .f-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderCampaigns();}
+function fcPub(c,btn){pubCat=c;document.querySelectorAll('#pub-filters .f-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderPubGrid();}
+
+function filterSearch(val){
+  const g=document.getElementById('cgrid-pub');if(!g)return;
+  const d=allCampaigns.filter(c=>c.title.toLowerCase().includes(val.toLowerCase())||(c.description&&c.description.toLowerCase().includes(val.toLowerCase())));
+  g.innerHTML=d.length?'<div class="c-grid">'+d.map(campaignCard).join('')+'</div>':'<div class="empty">No campaigns match your search.</div>';
+}
+
+function handleInterestClick(id,name){
+  if(!currentUser){document.getElementById('signup-prompt-modal').classList.add('open');return;}
+  openInterest(id,name);
+}
+function openInterest(id,name){
+  currentCampaignId=id;
+  document.getElementById('int-title').textContent='Express interest \u2014 '+name;
+  document.getElementById('int-ok').style.display='none';
+  document.getElementById('int-form').style.display='block';
+  document.getElementById('int-actions').style.display='flex';
+  document.getElementById('interest-modal').classList.add('open');
+}
+async function submitInterest(){
+  const website=document.getElementById('int-website').value.trim();
+  const message=document.getElementById('int-message').value.trim();
+  const visitors=document.getElementById('int-visitors').value.trim();
+  if(!website||!message){alert('Please fill in your website and message.');return;}
+  await sb.from('interests').insert({campaign_id:currentCampaignId,publisher_name:currentUser.name,publisher_website:website,publisher_email:currentUser.email,publisher_id:currentUser.id,visitors,message});
+  document.getElementById('int-form').style.display='none';
+  document.getElementById('int-actions').style.display='none';
+  document.getElementById('int-ok').style.display='block';
+  loadPubDash();
+}
+
+function sc(el){document.querySelectorAll('.cpill').forEach(p=>p.classList.remove('on'));el.classList.add('on');selectedCategory=el.textContent.trim();}
+
+async function postCampaign(){
+  const errEl=document.getElementById('post-err'),okEl=document.getElementById('post-ok');
+  errEl.style.display='none';okEl.style.display='none';
+  if(!currentUser){errEl.textContent='Please sign in.';errEl.style.display='block';return;}
+  const title=document.getElementById('camp-title').value.trim();
+  const desc=document.getElementById('camp-desc').value.trim();
+  if(!title||!desc){errEl.textContent='Please fill in title and description.';errEl.style.display='block';return;}
+  const {error}=await sb.from('campaigns').insert({title,description:desc,category:selectedCategory||'Other',budget:document.getElementById('camp-budget').value,duration:document.getElementById('camp-duration').value,audience:document.getElementById('camp-audience').value.trim(),user_id:currentUser.id});
+  if(error){errEl.textContent='Error: '+error.message;errEl.style.display='block';return;}
+  okEl.textContent='Campaign published! Publishers can now browse it.';okEl.style.display='block';
+  loadCampaigns();loadAdvDash();
+  document.getElementById('camp-title').value='';document.getElementById('camp-desc').value='';
+}
+
+// Contact form - saves to Supabase contact_messages table, visible in admin panel
+async function submitContactMessage(){
+  const name=document.getElementById('contact-name').value.trim();
+  const email=document.getElementById('contact-email').value.trim();
+  const message=document.getElementById('contact-message').value.trim();
+  const errEl=document.getElementById('contact-err'),okEl=document.getElementById('contact-ok');
+  errEl.style.display='none';okEl.style.display='none';
+  if(!name||!email||!message){errEl.textContent='Please fill in all fields.';errEl.style.display='block';return;}
+  const {error}=await sb.from('contact_messages').insert({name,email,message,status:'unread'});
+  if(error){errEl.textContent='Error sending message. Please try again.';errEl.style.display='block';return;}
+  okEl.textContent='Message sent! We will get back to you within 24 hours.';okEl.style.display='block';
+  document.getElementById('contact-name').value='';document.getElementById('contact-email').value='';document.getElementById('contact-message').value='';
+}
+
+async function loadAdvDash(){
+  if(!currentUser)return;
+  document.getElementById('adv-user-name').textContent=currentUser.name||currentUser.email;
+  document.getElementById('adv-greeting').textContent='Welcome back, '+(currentUser.name||'')+'!';
+  const initials=(currentUser.name||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('adv-avatar').textContent=initials;
+  document.getElementById('adv-profile-name').value=currentUser.name||'';
+  document.getElementById('adv-profile-company').value=currentUser.company||'';
+  document.getElementById('adv-profile-website').value=currentUser.website||'';
+  document.getElementById('adv-profile-phone').value=currentUser.phone||'';
+  document.getElementById('adv-profile-name-display').textContent=currentUser.name||'';
+  document.getElementById('adv-profile-company-display').textContent=currentUser.company||'';
+  const {data:camps,count}=await sb.from('campaigns').select('*',{count:'exact'}).eq('user_id',currentUser.id);
+  document.getElementById('adv-ov-campaigns').textContent=count||0;
+  const campIds=(camps||[]).map(c=>c.id);
+  if(camps&&camps.length){
+    document.getElementById('adv-campaigns-list').innerHTML='<table class="tbl"><thead><tr><th>Title</th><th>Category</th><th>Budget</th><th>Status</th></tr></thead><tbody>'+camps.map(c=>'<tr><td><strong>'+c.title+'</strong></td><td>'+c.category+'</td><td>'+c.budget+'</td><td><span class="badge badge-green">Active</span></td></tr>').join('')+'</tbody></table>';
+    if(campIds.length>0){
+      const {data:interests,count:ic}=await sb.from('interests').select('*',{count:'exact'}).in('campaign_id',campIds);
+      document.getElementById('adv-ov-interests').textContent=ic||0;
+      if(interests&&interests.length){
+        const bycamp={};interests.forEach(i=>{if(!bycamp[i.campaign_id])bycamp[i.campaign_id]=[];bycamp[i.campaign_id].push(i);});
+        let html='';
+        camps.forEach(c=>{
+          const ci=bycamp[c.id];
+          if(ci&&ci.length){
+            html+='<div style="margin-bottom:1.75rem"><div style="font-family:\'Syne\',sans-serif;font-size:0.82rem;font-weight:700;color:var(--ink);margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)">'+c.title+' <span style="color:var(--mid);font-weight:400">('+ci.length+' interested)</span></div>';
+            ci.forEach(i=>{
+              html+='<div class="interest-card"><div class="interest-card-head"><div><div class="interest-card-name">'+(i.publisher_name||'Publisher')+'</div><div class="interest-card-site"><a href="'+(i.publisher_website||'#')+'" target="_blank" style="color:#1a56b0">'+(i.publisher_website||'')+'</a></div></div><button class="btn-sm btn-sm-dark" onclick="openConversation(\''+((i.publisher_name||'Publisher').replace(/'/g,"\\'")+'\',\''+(i.publisher_email||''))+'\')" >Open conversation</button></div><div class="interest-card-msg">"'+(i.message||'')+'"</div><div class="interest-card-meta">Monthly visitors: <strong>'+(i.visitors||'Not specified')+'</strong></div></div>';
+            });
+            html+='</div>';
+          }
+        });
+        document.getElementById('adv-interests-list').innerHTML=html||'<div class="empty">No interests yet.</div>';
+      }else{document.getElementById('adv-interests-list').innerHTML='<div class="empty">No publisher interests yet. Your campaigns are live!</div>';}
+    }
+  }else{
+    document.getElementById('adv-campaigns-list').innerHTML='<p style="font-size:0.85rem;color:var(--mid)">No campaigns yet. <a onclick="showAdvPanel(\'post\',null)" style="cursor:pointer;color:var(--ink);font-weight:600;text-decoration:underline">Post your first campaign</a></p>';
+    document.getElementById('adv-interests-list').innerHTML='<div class="empty">Post a campaign first to receive publisher interest.</div>';
+  }
+}
+
+function openConversation(publisherName,publisherEmail){
+  showAdvPanel('messages',null);
+  document.getElementById('adv-msg-name').textContent='Conversation with '+publisherName;
+  const body=document.getElementById('adv-msg-body');
+  body.innerHTML='<div class="msg-bubble them">Hi! I expressed interest in your campaign. I would love to discuss how we can work together.<div class="msg-meta">'+publisherName+' &middot; just now</div></div>';
+}
+
+async function loadPubDash(){
+  if(!currentUser)return;
+  document.getElementById('pub-user-name').textContent=currentUser.name||currentUser.email;
+  document.getElementById('pub-greeting').textContent='Welcome back, '+(currentUser.name||'')+'!';
+  const initials=(currentUser.name||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('pub-avatar').textContent=initials;
+  document.getElementById('pub-profile-name').value=currentUser.name||'';
+  document.getElementById('pub-profile-company').value=currentUser.company||'';
+  document.getElementById('pub-profile-website').value=currentUser.website||'';
+  document.getElementById('pub-profile-phone').value=currentUser.phone||'';
+  document.getElementById('pub-profile-name-display').textContent=currentUser.name||'';
+  document.getElementById('pub-profile-company-display').textContent=currentUser.company||'';
+  if(currentUser.id){
+    const {count:ic}=await sb.from('interests').select('*',{count:'exact'}).eq('publisher_id',currentUser.id);
+    document.getElementById('pub-ov-interests').textContent=ic||0;
+  }
+}
+
+function showAdvPanel(p,el){
+  document.querySelectorAll('#screen-adv-dash .dash-panel').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('#screen-adv-dash .sidebar-link').forEach(e=>e.classList.remove('on'));
+  const panel=document.getElementById('adv-panel-'+p);if(panel)panel.classList.add('on');if(el)el.classList.add('on');
+}
+function showPubPanel(p,el){
+  document.querySelectorAll('#screen-pub-dash .dash-panel').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('#screen-pub-dash .sidebar-link').forEach(e=>e.classList.remove('on'));
+  const panel=document.getElementById('pub-panel-'+p);if(panel)panel.classList.add('on');if(el)el.classList.add('on');
+  if(p==='browse')renderPubGrid();
+}
+function showAdminPanel(p,el){
+  document.querySelectorAll('#screen-admin-dash .dash-panel').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('#screen-admin-dash .sidebar-link').forEach(e=>e.classList.remove('on'));
+  const panel=document.getElementById('admin-panel-'+p);if(panel)panel.classList.add('on');if(el)el.classList.add('on');
+  if(p==='users')loadAdminUsers();
+  if(p==='campaigns')loadAdminCampaigns();
+  if(p==='stats-editor')loadStatsEditor();
+  if(p==='contacts')loadAdminContacts();
+}
+
+async function loadAdminDash(){
+  const {count:uc}=await sb.from('users').select('*',{count:'exact',head:true});
+  const {count:ac}=await sb.from('users').select('*',{count:'exact',head:true}).eq('role','advertiser');
+  const {count:pc}=await sb.from('users').select('*',{count:'exact',head:true}).eq('role','publisher');
+  const {count:cc}=await sb.from('campaigns').select('*',{count:'exact',head:true});
+  const {count:ic}=await sb.from('interests').select('*',{count:'exact',head:true});
+  const {count:mc}=await sb.from('contact_messages').select('*',{count:'exact',head:true});
+  document.getElementById('admin-total-users').textContent=uc||0;
+  document.getElementById('admin-total-advertisers').textContent=ac||0;
+  document.getElementById('admin-total-publishers').textContent=pc||0;
+  document.getElementById('admin-total-campaigns').textContent=cc||0;
+  document.getElementById('admin-total-interests').textContent=ic||0;
+  document.getElementById('admin-total-contacts').textContent=mc||0;
+}
+
+async function loadAdminUsers(){
+  const {data}=await sb.from('users').select('*').order('created_at',{ascending:false});
+  const el=document.getElementById('admin-users-list');
+  if(!data||!data.length){el.innerHTML='<p style="font-size:0.85rem;color:var(--mid)">No users yet.</p>';return;}
+  el.innerHTML='<table class="tbl"><thead><tr><th>Name</th><th>Type</th><th>Company</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
+  data.map(u=>'<tr><td><a onclick=\'openUserDetail('+JSON.stringify(u).replace(/'/g,"&apos;")+' )\' style="cursor:pointer;color:var(--ink);font-weight:600;text-decoration:underline">'+(u.name||'-')+'</a></td>'+
+  '<td><span class="badge '+(u.role==='publisher'?'badge-green':'badge-blue')+'">'+(u.role||'user')+'</span></td>'+
+  '<td>'+(u.company||'-')+'</td>'+
+  '<td>'+(u.banned?'<span class="badge badge-red">Banned</span>':u.verified?'<span class="verified-badge"><svg viewBox="0 0 12 12" width="10" height="10"><path d="M5 8L2 5l1-1 2 2 4-4 1 1z"/></svg>Verified</span>':'<span class="badge badge-yellow">Unverified</span>')+'</td>'+
+  '<td style="display:flex;gap:0.4rem;flex-wrap:wrap">'+
+  '<button class="btn-sm btn-sm-outline" onclick=\'window.location.href="mailto:'+u.email+'?subject=AdSeeker - Message from Admin"\'>Email</button>'+
+  (u.banned?'<button class="btn-sm btn-sm-green" onclick=\'unbanUser("'+u.id+'")\'>Unban</button>':'<button class="btn-sm btn-sm-red" onclick=\'banUser("'+u.id+'","'+(u.name||'User')+'","'+(u.email||'')+'","'+(u.role||'user')+'")\'>Ban</button>')+
+  '</td></tr>').join('')+'</tbody></table>';
+}
+
+function openUserDetail(u){
+  if(typeof u==='string')u=JSON.parse(u);
+  currentAdminUser=u;
+  document.getElementById('udm-name').textContent=u.name||'Unknown user';
+  document.getElementById('udm-role').textContent=(u.role||'user').charAt(0).toUpperCase()+(u.role||'user').slice(1)+' — '+(u.company||'No company');
+  document.getElementById('udm-content').innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem">'+
+    '<div><div style="font-size:0.72rem;color:var(--mid);text-transform:uppercase;letter-spacing:0.06em;font-family:\'Syne\',sans-serif;margin-bottom:0.2rem">Email</div><div style="font-size:0.85rem;color:var(--ink)">'+(u.email||'-')+'</div></div>'+
+    '<div><div style="font-size:0.72rem;color:var(--mid);text-transform:uppercase;letter-spacing:0.06em;font-family:\'Syne\',sans-serif;margin-bottom:0.2rem">Phone</div><div style="font-size:0.85rem;color:var(--ink)">'+(u.phone||'-')+'</div></div>'+
+    '<div><div style="font-size:0.72rem;color:var(--mid);text-transform:uppercase;letter-spacing:0.06em;font-family:\'Syne\',sans-serif;margin-bottom:0.2rem">Company</div><div style="font-size:0.85rem;color:var(--ink)">'+(u.company||'-')+'</div></div>'+
+    '<div><div style="font-size:0.72rem;color:var(--mid);text-transform:uppercase;letter-spacing:0.06em;font-family:\'Syne\',sans-serif;margin-bottom:0.2rem">Website</div><div style="font-size:0.85rem;color:var(--ink)">'+(u.website?'<a href="'+u.website+'" target="_blank" style="color:#1a56b0">'+u.website+'</a>':'-')+'</div></div>'+
+    '<div><div style="font-size:0.72rem;color:var(--mid);text-transform:uppercase;letter-spacing:0.06em;font-family:\'Syne\',sans-serif;margin-bottom:0.2rem">Role</div><div style="font-size:0.85rem"><span class="badge '+(u.role==='publisher'?'badge-green':'badge-blue')+'">'+(u.role||'-')+'</span></div></div>'+
+    '<div><div style="font-size:0.72rem;color:var(--mid);text-transform:uppercase;letter-spacing:0.06em;font-family:\'Syne\',sans-serif;margin-bottom:0.2rem">Status</div><div style="font-size:0.85rem">'+(u.banned?'<span class="badge badge-red">Banned</span>':u.verified?'<span class="verified-badge"><svg viewBox="0 0 12 12" width="10" height="10"><path d="M5 8L2 5l1-1 2 2 4-4 1 1z"/></svg>Verified</span>':'<span class="badge badge-yellow">Unverified</span>')+'</div></div>'+
+    '<div><div style="font-size:0.72rem;color:var(--mid);text-transform:uppercase;letter-spacing:0.06em;font-family:\'Syne\',sans-serif;margin-bottom:0.2rem">Joined</div><div style="font-size:0.85rem;color:var(--ink)">'+(u.created_at?new Date(u.created_at).toLocaleDateString():'-')+'</div></div>'+
+    '</div>';
+  document.getElementById('udm-verify-btn').textContent=u.verified?'Unverify':'Verify';
+  document.getElementById('udm-action-ok').style.display='none';
+  document.getElementById('user-detail-modal').classList.add('open');
+}
+
+// Send email - opens users preferred email app directly
+function adminEmailUser(){
+  if(!currentAdminUser||!currentAdminUser.email)return;
+  window.location.href='mailto:'+currentAdminUser.email+'?subject=AdSeeker%20-%20Message%20from%20Admin&body=Dear%20'+(currentAdminUser.name||'User')+'%2C%0A%0A';
+}
+
+async function adminVerifyUser(){
+  if(!currentAdminUser)return;
+  const newVal=!currentAdminUser.verified;
+  await sb.from('users').update({verified:newVal}).eq('id',currentAdminUser.id);
+  const okEl=document.getElementById('udm-action-ok');
+  okEl.textContent=newVal?'User verified!':'User unverified.';okEl.style.display='block';
+  currentAdminUser.verified=newVal;
+  document.getElementById('udm-verify-btn').textContent=newVal?'Unverify':'Verify';
+  loadAdminUsers();
+}
+
+async function adminBanUser(){
+  if(!currentAdminUser)return;
+  await banUser(currentAdminUser.id,currentAdminUser.name,currentAdminUser.email,currentAdminUser.role);
+  closeModal('user-detail-modal');
+}
+
+// Ban user - updates Supabase, then opens email client to notify user
+async function banUser(id,name,email,role){
+  await sb.from('users').update({banned:true}).eq('id',id);
+  // Open email app to send ban notification
+  const subject=encodeURIComponent('Your AdSeeker account has been suspended');
+  const body=encodeURIComponent('Dear '+name+',\n\nWe are writing to inform you that your AdSeeker account has been permanently suspended due to a violation of our Terms & Conditions.\n\nIf you believe this is a mistake or have any questions, please contact us at hello@adseeker.com and include your name and the email address associated with your account.\n\nKind regards,\nThe AdSeeker Team');
+  window.location.href='mailto:'+email+'?subject='+subject+'&body='+body;
+  loadAdminUsers();
+}
+
+async function unbanUser(id){
+  await sb.from('users').update({banned:false}).eq('id',id);loadAdminUsers();
+}
+
+async function loadAdminCampaigns(){
+  const {data}=await sb.from('campaigns').select('*').order('created_at',{ascending:false});
+  const el=document.getElementById('admin-campaigns-list');
+  if(!data||!data.length){el.innerHTML='<p style="font-size:0.85rem;color:var(--mid)">No campaigns yet.</p>';return;}
+  el.innerHTML='<table class="tbl"><thead><tr><th>Title</th><th>Category</th><th>Budget</th><th>Duration</th><th>Posted</th></tr></thead><tbody>'+data.map(c=>'<tr><td><strong>'+c.title+'</strong></td><td>'+c.category+'</td><td>'+c.budget+'</td><td>'+c.duration+'</td><td>'+new Date(c.created_at).toLocaleDateString()+'</td></tr>').join('')+'</tbody></table>';
+}
+
+// Load contact messages from Supabase contact_messages table
+async function loadAdminContacts(){
+  const {data}=await sb.from('contact_messages').select('*').order('created_at',{ascending:false});
+  const el=document.getElementById('admin-contacts-list');
+  if(!data||!data.length){el.innerHTML='<div class="empty">No contact messages yet.</div>';return;}
+  el.innerHTML=data.map(m=>'<div class="contact-msg-card"><div class="contact-msg-header"><div><div class="contact-msg-name">'+(m.name||'Unknown')+'</div><div class="contact-msg-email">'+(m.email||'')+' &middot; '+new Date(m.created_at).toLocaleDateString()+'</div></div><div style="display:flex;gap:0.5rem;align-items:center"><span class="badge '+(m.status==='unread'?'badge-yellow':'badge-gray')+'">'+(m.status||'unread')+'</span><button class="btn-sm btn-sm-dark" onclick=\'window.location.href="mailto:'+m.email+'?subject=Re:%20Your%20AdSeeker%20enquiry"\'>Reply</button><button class="btn-sm btn-sm-green" onclick=\'markContactRead("'+m.id+'",this)\'>Mark read</button></div></div><div class="contact-msg-text">'+(m.message||'')+'</div></div>').join('');
+}
+
+async function markContactRead(id,btn){
+  await sb.from('contact_messages').update({status:'read'}).eq('id',id);
+  const badge=btn.closest('.contact-msg-card').querySelector('.badge');
+  if(badge){badge.textContent='read';badge.className='badge badge-gray';}
+  btn.style.display='none';
+}
+
+async function loadStatsEditor(){
+  try{
+    const {data}=await sb.from('display_stats').select('*').eq('id',1).single();
+    if(data){
+      ['1','2','3','4'].forEach(n=>{
+        document.getElementById('edit-s'+n).value=n==='1'?data.campaigns:n==='2'?data.businesses:n==='3'?data.deals:data.satisfaction||'';
+        document.getElementById('edit-l'+n).value=n==='1'?data.label_campaigns:n==='2'?data.label_businesses:n==='3'?data.label_deals:data.label_satisfaction||'';
+      });
+      updatePreview();
+    }
+  }catch(e){console.log('Stats not ready');}
+}
+function updatePreview(){
+  ['1','2','3','4'].forEach(n=>{
+    document.getElementById('prev-s'+n).textContent=document.getElementById('edit-s'+n).value||'...';
+    document.getElementById('prev-l'+n).textContent=document.getElementById('edit-l'+n).value||'...';
+  });
+}
+async function saveStats(){
+  const okEl=document.getElementById('stats-save-ok'),errEl=document.getElementById('stats-save-err');
+  okEl.style.display='none';errEl.style.display='none';
+  const {error}=await sb.from('display_stats').upsert({id:1,campaigns:document.getElementById('edit-s1').value,label_campaigns:document.getElementById('edit-l1').value,businesses:document.getElementById('edit-s2').value,label_businesses:document.getElementById('edit-l2').value,deals:document.getElementById('edit-s3').value,label_deals:document.getElementById('edit-l3').value,satisfaction:document.getElementById('edit-s4').value,label_satisfaction:document.getElementById('edit-l4').value});
+  if(error){errEl.textContent='Error: '+error.message;errEl.style.display='block';return;}
+  okEl.style.display='block';loadStats();setTimeout(()=>okEl.style.display='none',4000);
+}
+
+function sendMsgAs(who){
+  const input=document.getElementById(who+'-msg-input');
+  const text=input.value.trim();if(!text)return;
+  const body=document.getElementById(who+'-msg-body');
+  const contactPatterns=/\b[\w.-]+@[\w.-]+\.\w+\b|\b\d{7,}\b|instagram|whatsapp|telegram|twitter|linkedin/i;
+  if(contactPatterns.test(text)){
+    const w=document.createElement('div');w.className='msg-blocked';
+    w.textContent='Message blocked: external contact details are not permitted on AdSeeker.';body.appendChild(w);
+  }else{
+    const b=document.createElement('div');b.className='msg-bubble me';
+    b.innerHTML=text+'<div class="msg-meta">You &middot; just now</div>';body.appendChild(b);
+  }
+  input.value='';body.scrollTop=body.scrollHeight;
+}
+
+function selectPay(s,el){
+  document.querySelectorAll('.pay-option').forEach(o=>o.classList.remove('on'));el.classList.add('on');
+  if(s==='weekly'){document.getElementById('pay-period-label').textContent='Per week';document.getElementById('pay-installment').textContent='€200';document.getElementById('pay-fee').textContent='-€10';document.getElementById('pay-net').textContent='€190';}
+  else{document.getElementById('pay-period-label').textContent='Per month';document.getElementById('pay-installment').textContent='€800';document.getElementById('pay-fee').textContent='-€40';document.getElementById('pay-net').textContent='€760';}
+}
+function processPayment(){document.getElementById('pay-success').style.display='block';}
+
+async function saveProfile(who){
+  if(!currentUser)return;
+  const p=who+'-profile-';
+  const name=document.getElementById(p+'name').value.trim();
+  const company=document.getElementById(p+'company').value.trim();
+  const website=document.getElementById(p+'website').value.trim();
+  const phone=document.getElementById(p+'phone').value.trim();
+  const {error}=await sb.from('users').update({name,company,website,phone}).eq('id',currentUser.id);
+  if(error){alert('Error saving: '+error.message);return;}
+  currentUser.name=name;currentUser.company=company;currentUser.website=website;currentUser.phone=phone;
+  document.getElementById(who+'-user-name').textContent=name;
+  const okEl=document.getElementById(p+'ok');
+  okEl.textContent='Profile saved to Supabase!';okEl.style.display='block';
+  setTimeout(()=>okEl.style.display='none',3000);
+}
+
+loadStats();loadCampaigns();
+</script>
+</body>
+</html>
